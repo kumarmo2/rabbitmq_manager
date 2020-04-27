@@ -2,5 +2,6 @@
 
 
 members = [
-    "manager"
+    "manager",
+    "manager_lib_tester"
 ]

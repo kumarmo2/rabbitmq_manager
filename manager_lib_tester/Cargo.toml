@@ -1,5 +1,5 @@
 [package]
-name = "manager"
+name = "manager_lib_tester"
 version = "0.1.0"
 authors = ["kumarmo2 <mohitkumar1015795@gmail.com>"]
 edition = "2018"
@@ -7,8 +7,5 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-r2d2 = "0.8.8"
-lapin = "0.39.7"
-tokio = { version = "0.2.19", features = ["rt-threaded"] }
+manager = { path = "../manager" }
 serde = "1.0.106"
-serde_json = "1.0"

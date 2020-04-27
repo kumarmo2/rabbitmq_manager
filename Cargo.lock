@@ -352,7 +352,17 @@ version = "0.1.0"
 dependencies = [
  "lapin",
  "r2d2",
+ "serde",
+ "serde_json",
  "tokio",
+]
+
+[[package]]
+name = "manager_lib_tester"
+version = "0.1.0"
+dependencies = [
+ "manager",
+ "serde",
 ]
 
 [[package]]
