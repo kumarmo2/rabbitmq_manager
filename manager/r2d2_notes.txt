@@ -1,0 +1,3 @@
+- max_size() -> maximum number of connections handled by the pool.
+- min_idle -> minimum number of idle connections.
+- idle_timeout -> connections will be closed by sitting idle for this much time.

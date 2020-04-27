@@ -8,6 +8,7 @@ use r2d2::{CustomizeConnection, ManageConnection, Pool};
 use serde::{Deserialize, Serialize};
 use serde_json::to_vec;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use tokio::runtime::{Builder, Runtime};
 
 pub struct RabbitMqManager {
@@ -28,6 +29,8 @@ impl RabbitMqManager {
         let channel_manager = ChannelManager::new(connection_manager, Arc::clone(&guarded_runtime));
         let channel_pool = Pool::builder()
             .max_size(18)
+            .min_idle(Some(2))
+            .idle_timeout(Some(Duration::from_secs(60 * 5)))
             .build(channel_manager)
             .expect("could not create channel pool");
 
@@ -105,6 +108,8 @@ impl ChannelManager {
             // have reached the channels per connection quota.
             // it is very much needed for performance reasons.
             .max_size(5) // TODO: make this size configurable.
+            .min_idle(Some(1))
+            .idle_timeout(Some(Duration::from_secs(60 * 10)))
             .build(connection_manager);
         match (result) {
             Ok(pool) => {
