@@ -99,13 +99,21 @@ struct ChannelManager {
 
 impl ChannelManager {
     fn new(connection_manager: ConnectionManager, rt: Arc<Mutex<Runtime>>) -> Self {
-        let connection_pool = Pool::builder()
+        let connection_pool;
+        let result = Pool::builder()
             // TODO: need to make sure a new connection should only be made, when the existing connections
             // have reached the channels per connection quota.
             // it is very much needed for performance reasons.
             .max_size(5) // TODO: make this size configurable.
-            .build(connection_manager)
-            .expect("could not create connection pool");
+            .build(connection_manager);
+        match (result) {
+            Ok(pool) => {
+                connection_pool = pool;
+            }
+            Err(reason) => {
+                panic!("could not make connection pool {}", reason);
+            }
+        }
 
         ChannelManager {
             connection_pool,
