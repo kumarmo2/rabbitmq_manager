@@ -103,7 +103,7 @@ impl ChannelManager {
             // TODO: need to make sure a new connection should only be made, when the existing connections
             // have reached the channels per connection quota.
             // it is very much needed for performance reasons.
-            .max_size(100) // TODO: make this size configurable.
+            .max_size(5) // TODO: make this size configurable.
             .build(connection_manager)
             .expect("could not create connection pool");
 
