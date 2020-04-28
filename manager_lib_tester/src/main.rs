@@ -16,7 +16,7 @@ fn main() {
     };
     let manager = RabbitMqManager::new(addr);
     for count in 0..100 {
-        match manager.publish_message_to_queue("hello", &x) {
+        match manager.publish_message_to_queue_sync("hello", &x) {
             Ok(_) => println!("published {} message", count),
             Err(reason) => {
                 println!("could not publish the message: {}", reason);
@@ -24,5 +24,4 @@ fn main() {
         }
     }
     std::thread::sleep(Duration::from_secs(100));
-    println!("Hello, world!");
 }
