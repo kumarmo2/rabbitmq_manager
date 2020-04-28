@@ -1,5 +1,6 @@
 use lapin::{
-    options::BasicPublishOptions, BasicProperties, Channel, CloseOnDrop, ConnectionProperties,
+    options::*, publisher_confirm::Confirmation, BasicProperties, Channel, CloseOnDrop,
+    ConnectionProperties,
 };
 use r2d2::{ManageConnection, Pool};
 use serde::Serialize;
@@ -9,7 +10,6 @@ use std::time::Duration;
 
 pub struct RabbitMqManager {
     channel_pool: Pool<ChannelManager>,
-    //After initial somewhat stabilization of the library, remove tokio, and use a light weight library.
 }
 
 impl RabbitMqManager {
@@ -33,22 +33,48 @@ impl RabbitMqManager {
         &self,
         queue_name: &str,
         payload: &T,
-    ) -> Result<(), lapin::Error> {
+    ) -> Result<bool, lapin::Error> {
         let payload_vec = to_vec(payload).unwrap();
-        let result = block_on(self.channel_pool.clone().get().unwrap().basic_publish(
-            "",
-            queue_name,
-            BasicPublishOptions::default(),
-            payload_vec,
-            BasicProperties::default(),
-        ));
-        match result {
-            Ok(_) => {
-                return Ok(());
+        let confirm = block_on(async move {
+            self.channel_pool
+                .clone()
+                .get()
+                .unwrap()
+                .basic_publish(
+                    "",
+                    queue_name,
+                    BasicPublishOptions {
+                        mandatory: true,
+                        ..BasicPublishOptions::default()
+                    },
+                    payload_vec,
+                    BasicProperties::default().with_priority(42),
+                )
+                .await
+                .expect("basic-publish")
+                .await
+                .expect("publish-confirm")
+        });
+
+        match confirm {
+            Confirmation::Ack(ack) => {
+                // TODO: confirm if the below logic is correct. I have assumed, when the message is delivered,
+                // None is returned, else on failure, Some(_) is returned.
+                if let Some(_) = ack {
+                    println!("failed acknowledgement: {:?}", ack);
+                    return Ok(false);
+                } else {
+                    println!("message published confirm: {:?}", ack);
+                    return Ok(true);
+                }
             }
-            Err(reason) => {
-                // TODO: this looks awkard. Should be a better syntax.
-                return Err(reason);
+            Confirmation::Nack(nack) => {
+                println!("message not published confirm: {:?}", nack);
+                return Ok(false);
+            }
+            Confirmation::NotRequested => {
+                println!("cnfirm ack not even requested");
+                return Ok(false);
             }
         }
     }
@@ -101,7 +127,21 @@ impl ManageConnection for ChannelManager {
     type Connection = CloseOnDrop<Channel>;
 
     fn connect(&self) -> Result<Self::Connection, Self::Error> {
-        return block_on(self.connection_pool.clone().get().unwrap().create_channel());
+        return block_on(async move {
+            let channel = self
+                .connection_pool
+                .clone()
+                .get()
+                .unwrap()
+                .create_channel()
+                .await
+                .expect("could not create channel");
+            channel
+                .confirm_select(ConfirmSelectOptions::default())
+                .await
+                .expect("could not set confirm options on channel");
+            return Ok(channel);
+        });
     }
 
     fn is_valid(&self, conn: &mut Self::Connection) -> Result<(), Self::Error> {
