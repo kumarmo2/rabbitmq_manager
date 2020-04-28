@@ -15,13 +15,14 @@ fn main() {
         name: "kumarmo2".to_string(),
     };
     let manager = RabbitMqManager::new(addr);
-    for count in 0..100 {
-        match manager.publish_message_to_queue_sync("hello", &x) {
-            Ok(_) => println!("published {} message", count),
-            Err(reason) => {
-                println!("could not publish the message: {}", reason);
-            }
+    // for count in 0..100 {
+    match manager.publish_message_to_queue_sync("hello_three", &x) {
+        // Ok(_) => println!("published {} message", count),
+        Ok(_) => println!("published message"),
+        Err(reason) => {
+            println!("could not publish the message: {}", reason);
         }
     }
-    std::thread::sleep(Duration::from_secs(100));
+    // }
+    // std::thread::sleep(Duration::from_secs(100));
 }
