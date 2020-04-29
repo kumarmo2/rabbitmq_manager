@@ -1,3 +1,5 @@
+use lapin::publisher_confirm::PublisherConfirm;
+use lapin::PromiseChain;
 use lapin::{
     options::*, publisher_confirm::Confirmation, BasicProperties, Channel, CloseOnDrop,
     ConnectionProperties,
@@ -8,6 +10,7 @@ use serde_json::to_vec;
 use smol::block_on;
 use std::time::Duration;
 
+#[derive(Clone)] // This clone was required so that we can expose the channel_pool. This clone is not expensive as Pool is defined as: struct Pool<M>(Arc<Shared<M>>)
 pub struct RabbitMqManager {
     channel_pool: Pool<ChannelManager>,
 }
@@ -25,37 +28,8 @@ impl RabbitMqManager {
 
         RabbitMqManager { channel_pool }
     }
-}
 
-// Make sure queue exists before calling this method.
-impl RabbitMqManager {
-    pub fn publish_message_to_queue_sync<T: Serialize>(
-        &self,
-        queue_name: &str,
-        payload: &T,
-    ) -> Result<bool, lapin::Error> {
-        let payload_vec = to_vec(payload).unwrap();
-        let confirm = block_on(async move {
-            self.channel_pool
-                .clone()
-                .get()
-                .unwrap()
-                .basic_publish(
-                    "",
-                    queue_name,
-                    BasicPublishOptions {
-                        mandatory: true,
-                        ..BasicPublishOptions::default()
-                    },
-                    payload_vec,
-                    BasicProperties::default().with_priority(42),
-                )
-                .await
-                .expect("basic-publish")
-                .await
-                .expect("publish-confirm")
-        });
-
+    fn get_result_from_confirmation(confirm: &Confirmation) -> Result<bool, lapin::Error> {
         match confirm {
             Confirmation::Ack(ack) => {
                 // TODO: confirm if the below logic is correct. I have assumed, when the message is delivered,
@@ -80,6 +54,65 @@ impl RabbitMqManager {
     }
 }
 
+// Make sure queue exists before calling this method.
+impl RabbitMqManager {
+    pub async fn publish_message_to_queue_async<T: Serialize>(
+        &self,
+        queue_name: &str,
+        payload: &T,
+    ) -> Result<bool, lapin::Error> {
+        //TODO: Need to handle the cases, when message is not published.
+        let payload_vec = to_vec(payload).unwrap();
+        let confirm = self
+            .send_message_with_confirm(queue_name, payload_vec)
+            .await
+            .expect("basic-publish")
+            .await
+            .expect("publish-confirm");
+        return RabbitMqManager::get_result_from_confirmation(&confirm);
+    }
+
+    pub fn publish_message_to_queue_sync<T: Serialize>(
+        &self,
+        queue_name: &str,
+        payload: &T,
+    ) -> Result<bool, lapin::Error> {
+        //TODO: Need to handle the cases, when message is not published.
+        let payload_vec = to_vec(payload).unwrap();
+        let confirm = block_on(async move {
+            self.send_message_with_confirm(queue_name, payload_vec)
+                .await
+                .expect("basic-publish")
+                .await
+                .expect("publish-confirm")
+        });
+
+        RabbitMqManager::get_result_from_confirmation(&confirm)
+    }
+
+    fn send_message_with_confirm(
+        &self,
+        queue_name: &str,
+        payload: Vec<u8>,
+    ) -> PromiseChain<PublisherConfirm> {
+        self.channel_pool.clone().get().unwrap().basic_publish(
+            "",
+            queue_name,
+            //TODO: make this object just once.
+            BasicPublishOptions {
+                mandatory: true,
+                ..BasicPublishOptions::default()
+            },
+            payload,
+            BasicProperties::default().with_priority(42),
+        )
+    }
+
+    pub fn get_channel_pool(&self) -> Pool<ChannelManager> {
+        self.clone().channel_pool
+    }
+}
+
 struct ConnectionManager {
     uri: &'static str,
 }
@@ -91,7 +124,7 @@ impl ConnectionManager {
     }
 }
 
-struct ChannelManager {
+pub struct ChannelManager {
     // TODO: need to think how can I split channels among different connections after certain limit.
     // current_num_of_channels: Arc<Mutex<i32>>,
     connection_pool: Pool<ConnectionManager>,
