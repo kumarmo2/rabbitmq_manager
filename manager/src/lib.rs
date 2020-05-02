@@ -1,3 +1,4 @@
+use lapin::options::BasicPublishOptions;
 use lapin::publisher_confirm::PublisherConfirm;
 use lapin::PromiseChain;
 use lapin::{publisher_confirm::Confirmation, Channel, CloseOnDrop, ConnectionProperties};
@@ -9,7 +10,10 @@ use std::time::Duration;
 
 //reexport
 pub use lapin::{
-    options::BasicAckOptions, options::BasicConsumeOptions, types::FieldTable, BasicProperties,
+    options::BasicAckOptions,
+    options::{BasicConsumeOptions, ConfirmSelectOptions},
+    types::FieldTable,
+    BasicProperties,
 };
 pub use r2d2::Pool;
 
