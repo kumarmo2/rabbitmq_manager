@@ -11,7 +11,7 @@ use std::time::Duration;
 //reexport
 pub use lapin::{
     options::BasicAckOptions,
-    options::{BasicConsumeOptions, ConfirmSelectOptions},
+    options::{BasicConsumeOptions, ConfirmSelectOptions, QueueDeclareOptions},
     types::FieldTable,
     BasicProperties,
 };
