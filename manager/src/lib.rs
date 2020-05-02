@@ -13,6 +13,7 @@ pub use lapin::{
     options::BasicAckOptions,
     options::{BasicConsumeOptions, ConfirmSelectOptions, QueueDeclareOptions},
     types::FieldTable,
+    types::{AMQPValue, ShortString},
     BasicProperties,
 };
 pub use r2d2::Pool;
