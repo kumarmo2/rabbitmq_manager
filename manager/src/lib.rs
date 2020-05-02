@@ -4,11 +4,14 @@ use lapin::{
     options::*, publisher_confirm::Confirmation, BasicProperties, Channel, CloseOnDrop,
     ConnectionProperties,
 };
-use r2d2::{ManageConnection, Pool};
+use r2d2::ManageConnection;
 use serde::Serialize;
 use serde_json::to_vec;
 use smol::block_on;
 use std::time::Duration;
+
+//reexport
+pub use r2d2::Pool;
 
 #[derive(Clone)] // This clone was required so that we can expose the channel_pool. This clone is not expensive as Pool is defined as: struct Pool<M>(Arc<Shared<M>>)
 pub struct RabbitMqManager {

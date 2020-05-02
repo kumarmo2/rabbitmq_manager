@@ -16,7 +16,7 @@ fn main() {
     };
     let manager = RabbitMqManager::new(addr);
     // for count in 0..100 {
-    match manager.publish_message_to_queue_sync("hello_three", &x) {
+    match manager.publish_message_to_queue_sync("hello", &x) {
         // Ok(_) => println!("published {} message", count),
         Ok(_) => println!("published message"),
         Err(reason) => {
