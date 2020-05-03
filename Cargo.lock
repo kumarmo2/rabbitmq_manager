@@ -447,7 +447,7 @@ dependencies = [
 
 [[package]]
 name = "manager"
-version = "0.1.13"
+version = "0.1.14"
 dependencies = [
  "lapin",
  "r2d2",
@@ -967,9 +967,9 @@ checksum = "c7cb5678e1615754284ec264d9bb5b4c27d2018577fd90ac0ceb578591ed5ee4"
 
 [[package]]
 name = "smol"
-version = "0.1.2"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "350bf2952224030d0007755fcec71244fd802d38074d4bdfbf653d062e5cf9bc"
+checksum = "f92bf48a84965d40061dbd596c17cfe0bff734b5aaf94d9408b0b3e382f7c06e"
 dependencies = [
  "async-task",
  "crossbeam",

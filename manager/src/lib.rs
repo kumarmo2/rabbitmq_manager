@@ -16,7 +16,7 @@ pub use lapin::{
     types::{AMQPValue, LongInt, ShortString},
     BasicProperties,
 };
-pub use r2d2::Pool;
+pub use r2d2::{Error, Pool, PooledConnection};
 
 #[derive(Clone)] // This clone was required so that we can expose the channel_pool. This clone is not expensive as Pool is defined as: struct Pool<M>(Arc<Shared<M>>)
 pub struct RabbitMqManager {
