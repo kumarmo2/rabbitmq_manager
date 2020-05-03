@@ -9,3 +9,7 @@ edition = "2018"
 [dependencies]
 manager = { path = "../manager" }
 serde = "1.0.106"
+futures = { version = "0.3.4", default-features = false, features = ["std"] }
+chat_common_types = {git = "https://github.com/kumarmo2/chat_common_types.git", branch = "master"}
+smol = "0.1.4"
+num_cpus = "1.13.0"
